@@ -35,19 +35,31 @@ print(mergedTable.head(2))
 print(mergedTable.dtypes)
 # статистика
 print(mergedTable.describe())
+print(mergedTable.info())
 
 # 3 эффективность маркетинговых каналов по платящим
-moreEffectiveMarketingChannels = marketing[marketing['converted'] == True].groupby('marketing_channel')['variant'].count().sort_values(ascending=False)
+moreEffectiveMarketingChannels = marketing[marketing['converted'] == True].groupby('marketing_channel')[
+    'variant'].count().sort_values(ascending=False)
 print(moreEffectiveMarketingChannels)
 
+converted = marketing[marketing['converted'] == True]
+# абсолютные значения
+converted['marketing_channel'].value_counts()
+# относительные значения
+converted['marketing_channel'].value_counts() / marketing['marketing_channel'].value_counts()
+
 # 4 Количество игроков в каждой возрастной группе
-usersCountByAgeGroup=users.groupby(['age_group'])['age_group'].count()
+usersCountByAgeGroup = users.groupby(['age_group'])['age_group'].count()  # users['age_group'].value_counts()
 print(usersCountByAgeGroup)
 
 # 5 Самая ранняя дата подписки
-minSubscriptionDate = subscribers['date_subscribed'].astype('datetime64[ns]').min()
+minSubscriptionDate = subscribers['date_subscribed'].astype(
+    'datetime64[ns]').min()  # subscribers['date_subscribed'].sort_values().head(1) # pd.to_datetime(subscribers['date_subscribed']).sort_values().head(1)
 print(minSubscriptionDate)
 
 # 6 Портрет аудитории удержанных подписчиков
-retainedUsers = subscribers[subscribers['is_retained']==True].merge(users, on='user_id', how='inner').merge(marketing, on='user_id', how='inner').groupby(['language_displayed','age_group'])['is_retained'].count()
+retainedUsers = \
+subscribers[subscribers['is_retained'] == True].merge(users, on='user_id', how='inner').merge(marketing, on='user_id',
+                                                                                              how='inner').groupby(
+    ['language_displayed', 'age_group'])['is_retained'].count()
 print(retainedUsers)
