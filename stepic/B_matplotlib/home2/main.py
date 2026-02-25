@@ -70,3 +70,13 @@ print(houses.head(1))
 # plt.title('Distribution of yr_built')
 # print(houses['yr_built'].value_counts())
 # plt.show()
+
+# # 4. Распределение домов от наличия видов на набережную
+# houses.loc[houses['view']>0, 'view']=1
+# a=houses.groupby('view').count()['id']
+# print(a)
+# plt.figure(figsize=(10,8))
+# plt.pie(a, autopct='%.2f%%')
+# plt.title('Доля домов с видом на набережную')
+# plt.legend(['Остальные','С видом на набережную'])
+# plt.show()
