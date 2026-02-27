@@ -1,65 +1,30 @@
 import pandas as pd
-from datetime import datetime
 
-# Показать все столбцы
 pd.set_option('display.max_columns', None)
-# По желанию: увеличить ширину строки, чтобы столбцы не переносились
 pd.set_option('display.width', 1000)
 
-# загрузка данных
-subscribers = pd.read_csv('subscribers.csv')
-users = pd.read_csv('users.csv')
-marketing = pd.read_csv('marketing_campaign.csv')
+# 1. Загрузить, посмотреть, определить количество строк и объединить 3 датасета: marketing_campaign.csv, users.csv и subscribers.csv
+subscribersDf = pd.read_csv('csv/subscribers.csv')
+usersDf = pd.read_csv('csv/users.csv')
+marketingDf = pd.read_csv('csv/marketing_campaign.csv')
+mergedDf = usersDf.merge(marketingDf.merge(subscribersDf, how='inner', left_on='user_id', right_on='user_id'),
+                         how='inner', left_on='user_id', right_on='user_id')
+print(mergedDf.head(1))
+rows, columns = mergedDf.shape
+print(rows, columns)  # количество строк и колонок
 
-# количество строк и столбцов
-subsRowsCount, subsColumnCount = subscribers.shape
-print(f"subscribers: {subsRowsCount} row count, {subsColumnCount} column count")
+# 2. Определить типы и статистики колонок
+print(mergedDf.dtypes)  # типы колонок
+print(mergedDf.describe())  # основные статистики
 
-# количество строк и столбцов
-usRowsCount, usColumnCount = users.shape
-print(f"users: {usRowsCount} row count, {usColumnCount} column count")
+# 3. эффективность маркетинговых каналов по платящим
+print(marketingDf[marketingDf['converted'] == True]['marketing_channel'].value_counts())
 
-# количество строк и столбцов
-markRowsCount, markColumnCount = marketing.shape
-print(f"marketing_campaign: {markRowsCount} row count, {markColumnCount} column count")
+# 4. Определить количество игроков в каждой возрастной группе
+print(usersDf['age_group'].value_counts())
 
-print(subscribers)
-print(users)
-print(marketing)
+# 5. Определить самую раннюю дату подписки на сервис
+print(subscribersDf['date_subscribed'].astype('datetime64[ns]').min())
 
-# 1 объединение трех таблиц
-mergedTable = subscribers.merge(marketing.merge(users, on='user_id', how='inner'), on='user_id', how='inner')
-print(mergedTable.head(2))
-
-# 2 типы данных
-print(mergedTable.dtypes)
-# статистика
-print(mergedTable.describe())
-print(mergedTable.info())
-
-# 3 эффективность маркетинговых каналов по платящим
-moreEffectiveMarketingChannels = marketing[marketing['converted'] == True].groupby('marketing_channel')[
-    'variant'].count().sort_values(ascending=False)
-print(moreEffectiveMarketingChannels)
-
-converted = marketing[marketing['converted'] == True]
-# абсолютные значения
-converted['marketing_channel'].value_counts()
-# относительные значения
-converted['marketing_channel'].value_counts() / marketing['marketing_channel'].value_counts()
-
-# 4 Количество игроков в каждой возрастной группе
-usersCountByAgeGroup = users.groupby(['age_group'])['age_group'].count()  # users['age_group'].value_counts()
-print(usersCountByAgeGroup)
-
-# 5 Самая ранняя дата подписки
-minSubscriptionDate = subscribers['date_subscribed'].astype(
-    'datetime64[ns]').min()  # subscribers['date_subscribed'].sort_values().head(1) # pd.to_datetime(subscribers['date_subscribed']).sort_values().head(1)
-print(minSubscriptionDate)
-
-# 6 Портрет аудитории удержанных подписчиков
-retainedUsers = \
-subscribers[subscribers['is_retained'] == True].merge(users, on='user_id', how='inner').merge(marketing, on='user_id',
-                                                                                              how='inner').groupby(
-    ['language_displayed', 'age_group'])['is_retained'].count()
-print(retainedUsers)
+# 6. Определить портрет аудитории удержанных подписчиков (по возрасту и языку)
+print(mergedDf[mergedDf['is_retained'] == True][['age_group', 'language_displayed']].value_counts())
