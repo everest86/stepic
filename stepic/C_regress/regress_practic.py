@@ -190,3 +190,6 @@ with open(MODEL_FILE_PATH, 'rb') as filename:
     my_model = pickle.load(filename)
 
 print(my_model)  # чтение записанной модели
+
+# 12. Версии sklearn должны быть одинаковы
+# pip freeze >> requrements.txt
