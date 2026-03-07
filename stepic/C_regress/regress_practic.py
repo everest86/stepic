@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
 
+from matplotlib.pyplot import scatter
 # Разделение датасета - для обучения и тестирования
 from sklearn.model_selection import train_test_split
 
@@ -156,11 +157,12 @@ y_test_pred = np.clip(y_test_pred, a_min=10000, a_max=500000)
 poly = PolynomialFeatures(interaction_only=True, degree=3)
 # print(poly.fit_transform(x_train_orig.iloc[:1])) # переумножение признаков, каждый с каждым переумножается и больше точек получается
 
+scaler = StandardScaler()
 pipe = make_pipeline(
     DataPipeline(),
     SimpleImputer(strategy='median'),
     PolynomialFeatures(interaction_only=True),
-    StandardScaler()
+    scaler
 )
 x_train = pipe.fit_transform(x_train_orig)
 x_test = pipe.transform(x_test_orig)
@@ -177,3 +179,14 @@ y_test_pred = model.predict(x_test)
 # Постпроцессинг
 y_test_pred = np.clip(y_test_pred, a_min=10000, a_max=500000)
 # evaluate_preds(y_test, y_test_pred)
+
+with open(SCALER_FILE_PATH, 'wb') as filename:
+    pickle.dump(scaler, filename)
+
+with open(MODEL_FILE_PATH, 'wb') as filename:
+    pickle.dump(model, filename)
+
+with open(MODEL_FILE_PATH, 'rb') as filename:
+    my_model = pickle.load(filename)
+
+print(my_model)  # чтение записанной модели
