@@ -1,4 +1,7 @@
-class DataPipeline:
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+class DataPipeline(BaseEstimator, TransformerMixin):
     """Подготовка исходных данных"""
 
     def __init__(self):
@@ -10,7 +13,7 @@ class DataPipeline:
         self.latitude_median = None
         self.longitude_median = None
 
-    def fit(self, df):
+    def fit(self, df, y=None):
         """Сохранение статистик"""
 
         # Расчет медиан
@@ -18,17 +21,22 @@ class DataPipeline:
         self.latitude_min = -90
         self.latitude_max = 90
 
-        self.latitude_median = df['latitude'].median()
-        self.longitude_median = df['longitude'].median()
+        if 'latitude' in df.columns:
+            self.latitude_median = df['latitude'].median()
+        if 'longitude' in df.columns:
+            self.longitude_median = df['longitude'].median()
 
-    def transform(self, df):
+        return self
+
+    def transform(self, df, y=None):
         """Трансформация данных"""
 
-        df.loc[df['longitude'] > self.longitude_max, 'longitude'] = self.longitude_median
-        df.loc[(df['latitude'] <= self.latitude_min) | (
-                df['latitude'] > self.latitude_max), 'latitude'] = self.latitude_median
+        if 'longitude' in df.columns:
+            df.loc[df['longitude'] > self.longitude_max, 'longitude'] = self.longitude_median
+        if 'latitude' in df.columns:
+            df.loc[(df['latitude'] <= self.latitude_min) | (
+                        df['latitude'] > self.latitude_max), 'latitude'] = self.latitude_median
 
-        # удаляем ненужные колонки
         if 'index' in df.columns:
             df.drop(columns='index', inplace=True)
         if 'id' in df.columns:
