@@ -19,6 +19,7 @@ from sklearn.impute import SimpleImputer
 
 # Метрики качества
 from sklearn.metrics import mean_squared_error as mse, r2_score as r2
+from sympy.physics.paulialgebra import evaluate_pauli_product
 
 from stepic.C_regress.DataPipeline import DataPipeline
 
@@ -40,26 +41,13 @@ MODEL_FILE_PATH = 'model.pkl'
 df = pd.read_csv(DATASET_PATH, sep=',')
 # print(df.head().head(1))
 
-# 2. типы данных - один object (нужно что-то с ней сделать)
-# print(df.dtypes)
-
-# 3. Визуальный анализ данных (убрать выбросы)
-df['median_house_value'].hist(bins=50)
-# plt.show()
-# убираем выбросы
-df = df[df['median_house_value'] <= 500000]
-df['median_house_value'].hist(bins=50)
-# plt.show()
-# print(df.shape)
-
-# 4. удаляем ненужные поля
+# 2. удаляем ненужные поля
 x = df.drop(columns='median_house_value')  # матрица без целевого значения
 y = df['median_house_value']  # целевые значения
 
 # 5. Разбиение данных. Параметры: обучение, тест, обучение с целевыми значениями, тест с целевыми значениями. test_size - доля данных которая идет на тест,
 # random_state - фиксация состояния
 x_train_orig, x_test_orig, y_train, y_test = train_test_split(x, y, test_size=0.3, shuffle=True, random_state=1)
-# print(x_train_orig.index)
 
 # 6. Подготовка
 pipeline = DataPipeline()
@@ -67,31 +55,18 @@ pipeline.fit(x_train_orig)
 x_train = pipeline.transform(x_train_orig)
 x_test = pipeline.transform(x_test_orig)  # на тестовой выборке (не вызывать метод fit())
 
-# print(x_train.head(1))
-
 # 7. Пропуски
 # print(x_train.isnull().sum())
 si = SimpleImputer(strategy='median')
 si.fit(x_train)
-# print(si.statistics_) # массив медиан, тоже самое print(x_train.median())
-# заменяем пропуски
 x_train_np = si.transform(x_train)  # numpy array
-# print(x_train_np) # матрица null заменены на медианное значение
-# переводим в датафрейм
 x_train = pd.DataFrame(x_train_np, columns=x_train.columns)
-# print(x_train.head(10))
+x_test_np = si.transform(x_test)
+x_test = pd.DataFrame(x_test_np, columns=x_test.columns)
 
 # 8. Масштабирование признаков
 feature_names_for_stand = x_train.columns
 
-# MinMaxScaler лучше использовать для моделей которые работают с расстояниями (x[i]-min)/(max-min)
-# minMaxScaler = MinMaxScaler()
-# x_train_min_max_scaler = minMaxScaler.fit_transform(x_train)
-# x_test_min_max_scaler = minMaxScaler.transform(x_test)  # масштабирование тестовой выборки
-# x_train = pd.DataFrame(x_train_min_max_scaler, columns=feature_names_for_stand)
-# # print(x_train.head(10))
-
-# StandardScaler лучше использовать для линейных моделей  (x[i]-mean)/std
 standartScaler = StandardScaler()
 x_train_standart_scaler = standartScaler.fit_transform(x_train[feature_names_for_stand])  # передача признаков
 x_test_standart_scaler = standartScaler.transform(x_test[feature_names_for_stand])  # масштабирование тестовой выборки
@@ -99,11 +74,51 @@ x_test_standart_scaler = standartScaler.transform(x_test[feature_names_for_stand
 x_train[feature_names_for_stand] = x_train_standart_scaler  # для признаков делать перезапись
 x_test[feature_names_for_stand] = x_test_standart_scaler
 
-# print(standartScaler.mean_, standartScaler.var_)
-# print(x_train_standart_scaler)
-
 # 9. Сохранение выборок
 x_train.to_csv(PREPARED_DATASET_PATH_TRAIN, index=False, sep=";")
 x_test.to_csv(PREPARED_DATASET_PATH_TEST, index=False, sep=";")
 
-# 10. построение моделей
+
+# 10. построение моделей. Метрики
+
+def evaluate_preds(true_values, pred_values, save=False):
+    print("R2:\t" + str(round(r2(true_values, pred_values), 3)) + "\n" +
+          "RMSE:\t" + str(round(np.sqrt(mse(true_values, pred_values)), 3)) + "\n" +
+          "MSE:\t" + str(round(mse(true_values, pred_values), 3))
+          )
+
+    plt.figure(figsize=(8, 8))
+
+    sns.scatterplot(x=pred_values, y=true_values)
+    plt.plot([0, 500000], [0, 500000], linestyle='--', color='black')  # диагональ, где true_values = pred_values
+
+    plt.xlabel('Predicted values')
+    plt.ylabel('True values')
+    plt.title('True vs Predicted values')
+
+    if save == True:
+        plt.savefig('report.png')
+    plt.show()
+
+
+lr_model = LinearRegression()
+# обучение модели
+lr_model.fit(x_train, y_train)
+# print(lr_model.coef_)  # коэффициенты
+# print(lr_model.intercept_)  # сдвиг
+y_train_pred = lr_model.predict(x_train)  # предсказания
+y_train_pred_manual = np.sum(
+    lr_model.coef_ * x_train.iloc[0].values) + lr_model.intercept_  # предсказания то же самое только вручную подсчет
+# print(y_train_pred[0]) # то же самое print(y_train_pred_manual)
+
+# print(y_train_pred_manual)
+# постпроцессинг
+y_train_pred = np.clip(y_train_pred, a_min=10000, a_max=500000)  # обрезать
+# визуализация
+# evaluate_preds(y_train, y_train_pred)
+
+# предсказания на тесте
+# вывод: метрики схожи, модель обучена нормально
+y_test_pred = lr_model.predict(x_test)
+y_test_pred = np.clip(y_test_pred, a_min=10000, a_max=500000)
+# evaluate_preds(y_test, y_test_pred)
