@@ -82,3 +82,43 @@ predictTestDf = model.predict(xTestDf)
 
 # вывод: модель может ошибаться на 0.065 ед. на тестовых данных
 evaluate_preds(trueTestDf, predictTestDf)
+
+# ---------------------------------- Графики добавлено после работы ---------------------
+sns.pairplot(admDf, corner=True)
+plt.show()
+
+sns.histplot(x="GRE Score", data=admDf, kde=True, lw=1)
+plt.show()
+
+sns.histplot(x="TOEFL Score", data=admDf, kde=True, lw=1)
+plt.show()
+
+sns.countplot(x=admDf['University Rating'])
+plt.show()
+
+sns.countplot(x='Research', data=admDf)
+plt.show()
+
+sns.countplot(x=admDf['Research'], hue=admDf['University Rating'])
+plt.show()
+
+sns.countplot(x=admDf['University Rating'], hue=admDf['Research'], color='green')
+plt.show()
+
+sns.countplot(x='SOP', data=admDf)
+plt.show()
+
+sns.countplot(x='LOR ', data=admDf)
+plt.show()
+
+# Зависимость 'Chance of Admit ' и других признаков
+sns.lmplot(x='GRE Score', y='Chance of Admit ', data=admDf, hue='Research')
+plt.title('Chance of Admit vs GRE score')
+plt.show()
+
+sns.lmplot(x='TOEFL Score', y='Chance of Admit ', data=admDf, hue='Research')
+plt.title('Chance of Admit vs TOEFL score')
+plt.show()
+
+sns.lmplot(x='CGPA', y='Chance of Admit ', data=admDf, hue='Research')
+plt.title('Chance of Admit vs CGPA')
