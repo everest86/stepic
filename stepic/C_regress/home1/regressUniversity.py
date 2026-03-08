@@ -6,37 +6,14 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from stepic.C_regress.DataPipeline import DataPipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error as mse, r2_score as r2
+from EvaluatePredicts import evaluate_preds
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
-
-
-def evaluate_preds(true_values, pred_values, save=False):
-    print("R2:\t" + str(round(r2(true_values, pred_values), 3)) + "\n" +
-          "RMSE:\t" + str(round(np.sqrt(mse(true_values, pred_values)), 3)) + "\n" +
-          "MSE:\t" + str(round(mse(true_values, pred_values), 3))
-          )
-
-    plt.figure(figsize=(8, 8))
-
-    sns.scatterplot(x=pred_values, y=true_values)
-    plt.plot([0, 500000], [0, 500000], linestyle='--', color='black')  # диагональ, где true_values = pred_values
-
-    plt.xlabel('Predicted values')
-    plt.ylabel('True values')
-    plt.title('True vs Predicted values')
-
-    if save == True:
-        plt.savefig('report.png')
-    plt.show()
-
 
 # 1. Первичный анализ
 admDf = pd.read_csv("adm_data.csv")
@@ -67,21 +44,41 @@ plt.show()
 # 3. Разбить данные на обучение и тест
 x = admDf.drop(columns='Chance of Admit ')
 y = admDf['Chance of Admit ']
-xOrigTrain, xOrigTest, yTran, yTest = train_test_split(x, y, test_size=0.3, shuffle=True, random_state=2)
+trainDf, testDf, trueTrainDf, trueTestDf = train_test_split(x, y, test_size=0.3, shuffle=True, random_state=2)
 
+# подготовка данных
+pipe = DataPipeline()
+xTrainDf = pipe.fit_transform(trainDf)
+xTestDf = pipe.transform(testDf)
+
+# заполнение пропусков
+si = SimpleImputer()
+xTrainDfNotNull = si.fit_transform(xTrainDf)
+xTestDfNotNull = si.transform(xTestDf)
+
+# запись
+xTrainDf = pd.DataFrame(xTrainDfNotNull, columns=xTrainDf.columns)
+xTestDf = pd.DataFrame(xTestDfNotNull, columns=xTestDf.columns)
+
+# масштабирование
+columns = xTrainDf.columns
 scaler = StandardScaler()
-pipe = make_pipeline(
-    DataPipeline(),
-    SimpleImputer(strategy='median'),
-    PolynomialFeatures(interaction_only=True),
-    scaler
-)
-x_train = pipe.fit_transform(xOrigTrain)
-x_test = pipe.transform(xOrigTest)
+xTrainDf[columns] = scaler.fit_transform(xTrainDf)
+xTestDf[columns] = scaler.transform(xTestDf)
+
+print(xTestDf.head(2))
 
 model = LinearRegression()
-model.fit(x_train, yTran)
-y_train_pred = model.predict(x_train)
-# Постпроцессинг
-y_train_pred = np.clip(y_train_pred, a_min=10000, a_max=500000)
-evaluate_preds(yTran, y_train_pred)  # вывод: R стало больше
+model.fit(xTrainDf, trueTrainDf)
+print(model.coef_)  # коэффициенты колонок
+print(model.intercept_)  # сдвиг
+predictTrainDf = model.predict(xTrainDf)
+
+# Вывод: предсказанные значения совпадают с реальными данными для обучения
+evaluate_preds(trueTrainDf, predictTrainDf)
+
+# проверка на тестовых данных
+predictTestDf = model.predict(xTestDf)
+
+# вывод: модель обучена очень хорошо, качество предсказания высокое
+evaluate_preds(trueTestDf, predictTestDf)
