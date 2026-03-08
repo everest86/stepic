@@ -74,11 +74,11 @@ print(model.coef_)  # коэффициенты колонок
 print(model.intercept_)  # сдвиг
 predictTrainDf = model.predict(xTrainDf)
 
-# Вывод: предсказанные значения совпадают с реальными данными для обучения
+# Вывод: модель может ошибаться на 0.063 ед.
 evaluate_preds(trueTrainDf, predictTrainDf)
 
 # проверка на тестовых данных
 predictTestDf = model.predict(xTestDf)
 
-# вывод: модель обучена очень хорошо, качество предсказания высокое
+# вывод: модель может ошибаться на 0.065 ед. на тестовых данных
 evaluate_preds(trueTestDf, predictTestDf)
