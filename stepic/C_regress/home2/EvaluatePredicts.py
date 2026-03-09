@@ -14,7 +14,7 @@ def evaluate_preds(true_values, pred_values, save=False):
     plt.figure(figsize=(8, 8))
 
     sns.scatterplot(x=pred_values, y=true_values)
-    plt.plot([20000, 2000000], [20000, 2000000], linestyle='--', color='black')  # диагональ, где true_values = pred_values
+    plt.plot([0, 35], [0, 35], linestyle='--', color='black')  # диагональ, где true_values = pred_values
 
     plt.xlabel('Predicted values')
     plt.ylabel('True values')
