@@ -6,7 +6,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, confusion_matrix, classification_report)
+from sklearn.metrics import (accuracy_score, confusion_matrix, classification_report, fbeta_score)
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
@@ -36,14 +36,15 @@ predTrain = model.predict(trainDf)
 predTest = model.predict(testDf)
 
 # 1.4 Метрики качества
-print('TRAIN: ')
-print(classification_report(predTrain, yTrain))
-print('TEST: ')
-print(classification_report(predTest, yTest))
+print('TRAIN:')
+print(classification_report(yTrain, predTrain))
+print('TEST:')
+print(classification_report(yTest, predTest))
 
 # --------------------------------------------------------------------------------------------------
 
 # 2 первичный анализ
+
 
 # x = sourceLoansDf.drop(columns=['Loan_Status', 'Loan_ID'])
 # y = sourceLoansDf['Loan_Status']
