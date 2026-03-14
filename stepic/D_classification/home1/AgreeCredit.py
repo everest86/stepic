@@ -6,7 +6,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, confusion_matrix)
+from sklearn.metrics import (accuracy_score, confusion_matrix, classification_report)
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
@@ -18,7 +18,7 @@ sourceLoansDf = pd.read_csv("Loan_Data.csv")
 
 print(sourceLoansDf.head(2))
 
-x = sourceLoansDf.drop(columns='Loan_Status')
+x = sourceLoansDf.drop(columns=['Loan_Status', 'Loan_ID'])
 y = sourceLoansDf['Loan_Status']
 
 trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_state=0, stratify=y, shuffle=True)
@@ -49,3 +49,37 @@ testDf[binColumns + catColumns] = siCat.transform(testDf[binColumns + catColumns
 # проверка, что пустые ячейки заполнены
 # print(trainDf.isnull().sum())
 # print(testDf.isnull().sum())
+
+for cat_colname in catColumns + binColumns:
+    trainDf = pd.concat([trainDf, pd.get_dummies(
+        trainDf[cat_colname],
+        prefix=cat_colname,
+        dtype='int'
+    )], axis=1)
+
+trainDf.drop(columns=catColumns + binColumns, inplace=True)
+
+for cat_colname in catColumns + binColumns:
+    testDf = pd.concat([testDf, pd.get_dummies(
+        testDf[cat_colname],
+        prefix=cat_colname,
+        dtype='int'
+    )], axis=1)
+
+testDf.drop(columns=catColumns + binColumns, inplace=True)
+
+scaler = StandardScaler()
+scaler.fit(trainDf[numColumns])
+
+trainDf[numColumns] = scaler.transform(trainDf[numColumns])
+testDf[numColumns] = scaler.transform(testDf[numColumns])
+
+model = LogisticRegression()
+model.fit(trainDf, yTrain)
+
+predTrain = model.predict(trainDf)
+predTest = model.predict(testDf)
+
+print(classification_report(predTrain, yTrain))
+
+print(classification_report(predTest, yTest))
