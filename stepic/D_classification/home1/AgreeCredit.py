@@ -18,28 +18,28 @@ sourceLoansDf = pd.read_csv("Loan_Data.csv")
 
 print(sourceLoansDf.head(2))
 
-# 1.1 удаление пустых строк
-loansDf = sourceLoansDf.dropna()
-
-# 1.2 удаление категориальных колонок
-
-x = loansDf.select_dtypes(exclude='object')
-y = loansDf['Loan_Status']
-
-trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_state=6, shuffle=True, stratify=y)
-
-# 1.3 обучение модели
-model = LogisticRegression()
-model.fit(trainDf, yTrain)
-
-predTrain = model.predict(trainDf)
-predTest = model.predict(testDf)
-
-# 1.4 Метрики качества
-print('TRAIN:')
-print(classification_report(yTrain, predTrain))
-print('TEST:')
-print(classification_report(yTest, predTest))
+# # 1.1 удаление пустых строк
+# loansDf = sourceLoansDf.dropna()
+#
+# # 1.2 удаление категориальных колонок
+#
+# x = loansDf.select_dtypes(exclude='object')
+# y = loansDf['Loan_Status']
+#
+# trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_state=6, shuffle=True, stratify=y)
+#
+# # 1.3 обучение модели
+# model = LogisticRegression()
+# model.fit(trainDf, yTrain)
+#
+# predTrain = model.predict(trainDf)
+# predTest = model.predict(testDf)
+#
+# # 1.4 Метрики качества
+# print('TRAIN:')
+# print(classification_report(yTrain, predTrain))
+# print('TEST:')
+# print(classification_report(yTest, predTest))
 
 # --------------------------------------------------------------------------------------------------
 
