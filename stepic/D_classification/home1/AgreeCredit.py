@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import warnings
 
 from sklearn.impute import SimpleImputer
@@ -13,60 +14,38 @@ pd.set_option('display.width', 1000)
 
 # 1. Базовое решение
 
-# загрузка данных
-sourceLoanDf = pd.read_csv("Loan_Data.csv").head()
+sourceLoansDf = pd.read_csv("Loan_Data.csv")
 
-# часть данных
-print(sourceLoanDf)
+print(sourceLoansDf.head(2))
 
-# пустые данные в каждой колонке
-print(sourceLoanDf.isnull().sum())
+x = sourceLoansDf.drop(columns='Loan_Status')
+y = sourceLoansDf['Loan_Status']
 
-# добавление числового целевого поля
-sourceLoanDf['status'] = 0
-sourceLoanDf.loc[sourceLoanDf['Loan_Status'] == 'Y', 'status'] = 1
+trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_state=0, stratify=y, shuffle=True)
 
-# типы данных
-print(sourceLoanDf.dtypes)
+binColumns = []
+catColumns = []
+numColumns = []
 
-# удаление пустых данных
-loanDf = sourceLoanDf[~sourceLoanDf['LoanAmount'].isnull()]
-print(loanDf.isnull().sum())
+# заполнение массивов с разбивкой на типы
+for column in trainDf.columns:
+    if (trainDf[column].value_counts().shape[0] == 2):
+        binColumns.append(column)
+    elif (trainDf[column].dtypes == 'object'):
+        catColumns.append(column)
+    else:
+        numColumns.append(column)
 
-# удаление категориальных данных
-loanDf = loanDf.select_dtypes(exclude='object')
-print(loanDf.head())
+# заполнение вещественных значений
+siNum = SimpleImputer(missing_values=np.nan, strategy='median')
+trainDf[numColumns] = siNum.fit_transform(trainDf[numColumns])
+testDf[numColumns] = siNum.transform(testDf[numColumns])
 
-x = loanDf.drop(columns=['status'])
-y = loanDf['status']
+# заполнение категориальных значений
+siCat = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+trainDf[binColumns + catColumns] = siCat.fit_transform(trainDf[binColumns + catColumns])
+testDf[binColumns + catColumns] = siCat.transform(testDf[binColumns + catColumns])
 
-print(y)
-
-# разделение
-trainDf, testDf, yTrainDf, yTestDf = train_test_split(x, y,
-                                                      test_size=0.2, random_state=3, shuffle=True)
-
-# масштабироваие
-scaler = StandardScaler()
-scaler.fit(trainDf)
-trainDf = scaler.transform(trainDf)
-testDf = scaler.transform(testDf)
-
-print(testDf)
-
-# обучение модели
-model = LogisticRegression()
-model.fit(trainDf, yTrainDf)
-
-predTrain = model.predict(trainDf)
-predTest = model.predict(testDf)
-
-# Метрика Accuracy для тенировочных данных
-trainAccuracy = accuracy_score(yTrainDf, predTrain)
-# Метрика Accuracy для тенировочных данных
-testAccuracy = accuracy_score(yTestDf, predTest)
-print("Train Accuracy:", trainAccuracy, "Test Accuracy:", testAccuracy)
-# Вывод: на тренировочных данных Accuracy=1, на тестовых = 0
-
-# PR - кривая
-print(confusion_matrix(yTrainDf, predTrain))
+# проверка, что пустые ячейки заполнены
+# print(trainDf.isnull().sum())
+# print(testDf.isnull().sum())
