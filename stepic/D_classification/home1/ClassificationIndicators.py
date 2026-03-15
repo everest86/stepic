@@ -1,8 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import (roc_auc_score, roc_curve, auc, confusion_matrix, \
-                             accuracy_score, classification_report, \
+from sklearn.metrics import (roc_auc_score, roc_curve, auc, confusion_matrix,
+                             accuracy_score, classification_report,
                              precision_recall_curve, recall_score, precision_score, fbeta_score, f1_score)
 
 y = [1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0]
@@ -42,22 +42,16 @@ print(classification_report(y, b))
 y = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 0])
 b = np.array([0.1, 0.8, 0.45, 0.23, 0.66, 0.12, 0.69, 0.33, 0.92, 0.13])
 
-# UPD 2025-07-29
-# plot_roc_curve больше нет в sklearn
-# plot_roc_curve(lr, X_test, y_test);
-
-# можно пользоваться RocCurveDisplay
-
-# fpr, tpr, thresholds = roc_curve(y, b[:, 1])
-# roc_auc = auc(fpr, tpr)
-# plt.figure()
-# plt.plot(fpr, tpr, color='darkorange',
-#          lw=1, label='ROC curve (area = %0.2f)' % roc_auc)
-# plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
-# plt.xlim([0.0, 1.0])
-# plt.ylim([0.0, 1.05])
-# plt.xlabel('False Positive Rate')
-# plt.ylabel('True Positive Rate')
-# plt.title('ROC curve')
-# plt.legend(loc="lower right")
-# plt.show()
+fpr, tpr, thresholds = roc_curve(y, b)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange',
+         lw=1, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+plt.xlim([0.0, 1.05])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC curve')
+plt.legend(loc="lower right")
+plt.show()
