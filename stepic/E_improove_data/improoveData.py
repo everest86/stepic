@@ -297,8 +297,9 @@ df.plot(kind='scatter', x='total_rooms', y='total_bedrooms')
 plt.show()
 from sklearn.svm import OneClassSVM
 
+X = StandardScaler().fit_transform(df[['total_rooms', 'total_bedrooms']])
 clf = OneClassSVM(nu=0.01)  # ищет 1%
-clf.fit(houseDf[['total_rooms', 'total_bedrooms']])
+clf.fit(X)
 yPred = clf.predict(houseDf[['total_rooms', 'total_bedrooms']])  # 1 - объект норм, -1 - выброс
 print(houseDf[yPred == -1])
 
@@ -320,4 +321,104 @@ b1 = plt.scatter(houseDf['total_rooms'], houseDf['total_bedrooms'], c='white', s
 plt.legend([a.legend_elements()[0][0], b1],
            ["разделяющая граница", "обучающие данные"],
            loc="upper left");
+plt.show()
+
+# Isolation forest
+X = StandardScaler().fit_transform(df[['total_rooms', 'total_bedrooms']])
+from sklearn.ensemble import IsolationForest
+
+clf = IsolationForest(random_state=1, contamination=0.01)  # 1% выбросов
+clf.fit(X)
+
+y_pred = clf.predict(houseDf[['total_rooms', 'total_bedrooms']])  # 1 - объект норм, -1 - выброс
+print(y_pred)
+
+import matplotlib.pyplot as plt
+
+xx, yy = np.meshgrid(np.linspace(-1000, houseDf['total_rooms'].max(), 500),
+                     np.linspace(-1000, houseDf['total_bedrooms'].max(), 500))
+
+Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+plt.figure(figsize=(12, 9))
+plt.title("Выявление выбросов на искусственных данных")
+
+a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred')
+plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
+
+s = 40
+b1 = plt.scatter(houseDf['total_rooms'], houseDf['total_bedrooms'], c='white', s=s, edgecolors='k')
+
+plt.legend([a.legend_elements()[0][0], b1],
+           ["разделяющая граница", "обучающие данные"],
+           loc="upper left");
+plt.show()
+
+# KNN - смотрит на расстояние
+X = StandardScaler().fit_transform(df[['total_rooms', 'total_bedrooms']])
+from sklearn.neighbors import LocalOutlierFactor
+
+clf = LocalOutlierFactor(novelty=True)
+clf.fit(X)
+
+y_pred = clf.predict(houseDf[['total_rooms', 'total_bedrooms']])
+print(y_pred)
+import matplotlib.pyplot as plt
+
+xx, yy = np.meshgrid(np.linspace(-1000, houseDf['total_rooms'].max(), 500),
+                     np.linspace(-1000, houseDf['total_bedrooms'].max(), 500))
+
+Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+plt.figure(figsize=(12, 9))
+plt.title("Выявление выбросов на искусственных данных")
+
+a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred')
+plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
+
+s = 40
+b1 = plt.scatter(houseDf['total_rooms'], houseDf['total_bedrooms'], c='white', s=s, edgecolors='k')
+
+plt.legend([a.legend_elements()[0][0], b1],
+           ["разделяющая граница", "обучающие данные"],
+           loc="upper left");
+plt.show()
+
+# DBSCAN
+X = StandardScaler().fit_transform(df[['total_rooms', 'total_bedrooms']])
+from sklearn.cluster import DBSCAN
+
+db = DBSCAN(eps=0.5, min_samples=5).fit(X)
+core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
+labels = db.labels_
+# Количество кластеров в метках без учета шума
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise_ = list(labels).count(-1)
+
+print('Кол-во кластеров', n_clusters_)
+print('Кол-во шума', n_noise_)
+
+# Отрисовка результата
+plt.figure(figsize=(12, 9))
+unique_labels = set(labels)
+colors = [plt.cm.Spectral(each)
+          for each in np.linspace(0, 1, len(unique_labels))]
+
+for k, col in zip(unique_labels, colors):
+    if k == -1:
+        # Черный цвет используется для выявления шума
+        col = [0, 0, 0, 1]
+
+    class_member_mask = (labels == k)
+
+    xy = X[class_member_mask & core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
+             markeredgecolor='k', markersize=14)
+
+    xy = X[class_member_mask & ~core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
+             markeredgecolor='k', markersize=6)
+
+plt.title('Оценочное кол-во кластеров: %d' % n_clusters_)
 plt.show()
