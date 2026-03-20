@@ -177,33 +177,114 @@ print(sourceWeatherDf.shape)
 # # f1_1_train = 0.6165884194053208
 # # f1_1_test = 0.6174154701250579
 # print(run_experiment(trainDf, testDf, yTrain, yTest))
-
-# 2. Проведите первичный анализ данных ---------------------------------------------------------------------------------
-print(sourceWeatherDf.dtypes)
-
-# аномалии в Rainfall с разбивкой на локацию
-# вывод: обнаружены аномалии свыше 75
-sourceWeatherDf.groupby('Location')['Rainfall'].hist(bins=100)
-plt.show()
-# обнуляем аномальные данные Rainfall
-sourceWeatherDf.loc[sourceWeatherDf['Rainfall'] > 75.0, 'Rainfall'] = np.nan
-
-# аномалии в Rainfall с разбивкой на локацию
-# вывод: обнаружены аномалии свыше 75
-sourceWeatherDf.groupby('Location')['Evaporation'].hist(bins=100)
-plt.show()
+#
+# # 2. Проведите первичный анализ данных ---------------------------------------------------------------------------------
+# print(sourceWeatherDf.dtypes)
+#
+# # проверка на аномалии
+# print(sourceWeatherDf.describe())
+#
+# # 3. Проведите визуальный анализ данных
+#
+# # аномалии в Rainfall с разбивкой на локацию
+# # вывод: обнаружены аномалии свыше 75
+# sourceWeatherDf.groupby('Location')['Rainfall'].hist(bins=20)
+# plt.show()
 # # обнуляем аномальные данные Rainfall
 # sourceWeatherDf.loc[sourceWeatherDf['Rainfall'] > 75.0, 'Rainfall'] = np.nan
-
-
-# # построение матрицы корреляций
-# plt.figure(figsize=(16, 16))
-# corr_matrix = sourceWeatherDf.select_dtypes("number").corr()
+#
+# # аномалии в Evaporation с разбивкой на локацию
+# # вывод: обнаружены аномалии свыше 85
+# sourceWeatherDf.groupby('Location')['Evaporation'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные Evaporation
+# sourceWeatherDf.loc[sourceWeatherDf['Evaporation'] > 85.0, 'Evaporation'] = np.nan
+#
+# # аномалии в Sunshine с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Sunshine'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в WindGustSpeed с разбивкой на локацию
+# # вывод: обнаружены аномалии свыше 120
+# sourceWeatherDf.groupby('Location')['WindGustSpeed'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные WindGustSpeed
+# sourceWeatherDf.loc[sourceWeatherDf['WindGustSpeed'] >= 120, 'WindGustSpeed'] = np.nan
+#
+# # аномалии в WindSpeed9am с разбивкой на локацию
+# # вывод: обнаружены аномалии свыше 60
+# sourceWeatherDf.groupby('Location')['WindSpeed9am'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные WindGustSpeed
+# sourceWeatherDf.loc[sourceWeatherDf['WindSpeed9am'] >= 60, 'WindSpeed9am'] = np.nan
+#
+# # аномалии в WindSpeed3pm с разбивкой на локацию
+# # вывод: обнаружены аномалии свыше 68
+# sourceWeatherDf.groupby('Location')['WindSpeed3pm'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные WindSpeed3pm
+# sourceWeatherDf.loc[sourceWeatherDf['WindSpeed3pm'] >= 60, 'WindSpeed3pm'] = np.nan
+#
+# # аномалии в Humidity9am с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Humidity9am'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в Humidity3pm с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Humidity3pm'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в Pressure9am с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Pressure9am'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в Pressure3pm с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Pressure3pm'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в Cloud9am с разбивкой на локацию
+# # вывод: аномалий свыше 8.3
+# sourceWeatherDf.groupby('Location')['Cloud9am'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные Cloud9am
+# sourceWeatherDf.loc[sourceWeatherDf['Cloud9am'] >= 8.3, 'Cloud9am'] = np.nan
+#
+# # аномалии в Cloud3pm с разбивкой на локацию
+# # вывод: аномалий свыше 8.3
+# sourceWeatherDf.groupby('Location')['Cloud3pm'].hist(bins=20)
+# plt.show()
+# # обнуляем аномальные данные Cloud3pm
+# sourceWeatherDf.loc[sourceWeatherDf['Cloud3pm'] >= 8.3, 'Cloud3pm'] = np.nan
+#
+# # аномалии в Temp9am с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Temp9am'].hist(bins=20)
+# plt.show()
+#
+# # аномалии в Temp3pm с разбивкой на локацию
+# # вывод: аномалий не обнаружено
+# sourceWeatherDf.groupby('Location')['Temp3pm'].hist(bins=20)
+# plt.show()
+#
+# # матрица корреляций
+# # вывод: наблюдается большое количество зависимостей
+# plt.figure(figsize=(20, 20))
+# corr_matrix = sourceWeatherDf.select_dtypes('number').corr()
 # corr_matrix = np.round(corr_matrix, 2)
-# corr_matrix[np.abs(corr_matrix) < 0.3] = 0
+# corr_matrix[np.abs(corr_matrix) < 0.1] = 0
 # sns.heatmap(corr_matrix, annot=True, linewidths=.5, cmap='coolwarm')
 # plt.title('Correlation matrix')
 # plt.show()
+
+# 4. Разбейте данные на обучение и тест
+x = sourceWeatherDf.drop(columns='RainTomorrow')
+y = sourceWeatherDf['RainTomorrow']
+
+trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.3, random_state=0, shuffle=True, stratify=y)
 
 # # OVER меньший класс увеличиваем до большего
 # TARGET_NAME = 'RainTomorrow'
