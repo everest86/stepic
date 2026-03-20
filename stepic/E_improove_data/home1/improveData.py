@@ -9,10 +9,16 @@ from sklearn.metrics import (roc_auc_score, roc_curve, auc, confusion_matrix, \
                              accuracy_score, classification_report, \
                              precision_recall_curve, recall_score)
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline, FeatureUnion
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 import warnings
 
 from sklearn.preprocessing import StandardScaler
+
+from stepic.E_improove_data.home1.DataPipeline import DataPipeline
 
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', None)
@@ -281,10 +287,43 @@ print(sourceWeatherDf.shape)
 # plt.show()
 
 # 4. Разбейте данные на обучение и тест
-x = sourceWeatherDf.drop(columns='RainTomorrow')
-y = sourceWeatherDf['RainTomorrow']
 
+# удалены целевые значения null
+weatherDf = sourceWeatherDf[~(sourceWeatherDf['RainTomorrow'].isna())]
+x = weatherDf.drop(columns=['RainTomorrow', 'Date'])
+y = weatherDf['RainTomorrow']
 trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.3, random_state=0, shuffle=True, stratify=y)
+
+# 5. Сделайте предобработку данных с помощью класса и пайплайна
+
+pipe = DataPipeline()
+trainDf = pipe.fit_transform(trainDf)
+
+numPipe = make_pipeline(
+    SimpleImputer(strategy="median"),
+    StandardScaler()
+)
+
+catPipe = make_pipeline(
+    SimpleImputer(strategy='most_frequent'),
+    OneHotEncoder(handle_unknown="ignore")
+)
+
+binPipe = make_pipeline(
+    SimpleImputer(strategy='most_frequent'),
+    OneHotEncoder(handle_unknown="ignore")
+)
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numPipe, pipe.numColumns),
+        ("cat", catPipe, pipe.catColumns),
+        ("bin", binPipe, pipe.binColumns),
+    ]
+)
+
+trainDf = preprocessor.fit_transform(trainDf)
+testDf = preprocessor.transform(testDf)
 
 # # OVER меньший класс увеличиваем до большего
 # TARGET_NAME = 'RainTomorrow'
