@@ -30,18 +30,19 @@ y = sourceDf['Class']
 
 trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.3, random_state=0, stratify=y, shuffle=True)
 
+# 1.1. Сделайте минимальные преобразования
 # Масштабирование
 scaler = StandardScaler()
-trainDf=scaler.fit_transform(trainDf)
-testDf=scaler.transform(testDf)
+trainDf = scaler.fit_transform(trainDf)
+testDf = scaler.transform(testDf)
 
-# Обучение
-model=LogisticRegression()
+# 1.2. Обучение
+model = LogisticRegression()
 model.fit(trainDf, yTrain)
 print(model.coef_)
 
-predTrain=model.predict(trainDf)
-predTest=model.predict(testDf)
+predTrain = model.predict(trainDf)
+predTest = model.predict(testDf)
 
 print(classification_report(yTrain, predTrain))
 print(classification_report(yTest, predTest))
