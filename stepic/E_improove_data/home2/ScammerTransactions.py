@@ -1,10 +1,7 @@
 import pandas as pd
 import numpy as np
 import warnings
-import imblearn
-from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (roc_auc_score, roc_curve, auc, confusion_matrix,
@@ -44,7 +41,7 @@ print(model.coef_)
 predTrain = model.predict(trainDf)
 predTest = model.predict(testDf)
 
-print(classification_report(yTrain, predTrain))
+# print(classification_report(yTrain, predTrain))
 print(classification_report(yTest, predTest))
 
 # 1.3. Выберете и посчитайте метрику качества
@@ -144,3 +141,53 @@ def run_experiment(X_train, X_test, y_train, y_test, method='not'):
     }
 
     return stata, model
+
+
+# Масштабирование
+scaler = StandardScaler()
+trainDf = scaler.fit_transform(trainDf)
+testDf = scaler.transform(testDf)
+
+# NOT ничего не делаем с данными
+# Вывод: при удалении null значений и без учета категориальных признаков предсказания модели были лучше
+stata, model = run_experiment(trainDf, testDf, yTrain, yTest, method='not')
+print(stata)
+
+# 3. Проведите балансировку данных минимум тремя методами
+
+# OVER меньший класс увеличиваем до большего
+TARGET_NAME = 'Class'
+dfForBalancing = pd.DataFrame(np.c_[trainDf, yTrain])  # преобразование в int
+# print(dfForBalancing)
+TARGET_NUM = 30
+dfBalanced = balance_df_by_target(dfForBalancing, TARGET_NUM, method='over')
+# print(dfBalanced[TARGET_NUM].value_counts())
+trainBalancedDf = dfBalanced.drop(columns=[TARGET_NUM])
+yTrainBalanced = dfBalanced[TARGET_NUM]
+stata, model = run_experiment(trainBalancedDf, testDf, yTrainBalanced, yTest, method='over')
+print(stata)
+
+# UNDER
+dfBalanced = balance_df_by_target(dfForBalancing, TARGET_NUM, method='under')
+trainBalancedDf = dfBalanced.drop(columns=[TARGET_NUM])
+yTrainBalanced = dfBalanced[TARGET_NUM]
+stata, model = run_experiment(trainBalancedDf, testDf, yTrainBalanced, yTest, method='under')
+print(stata)
+
+# TOMEK
+dfBalanced = balance_df_by_target(dfForBalancing, TARGET_NUM, method='tomek')
+trainBalancedDf = dfBalanced.drop(columns=[TARGET_NUM])
+yTrainBalanced = dfBalanced[TARGET_NUM]
+
+stata, model = run_experiment(trainBalancedDf, testDf, yTrainBalanced, yTest, method='tomek')
+print(stata)
+
+# SMOTE - генерация синтетики для заполнения пустот
+dfBalanced = balance_df_by_target(dfForBalancing, TARGET_NUM, method='smote')
+trainBalancedDf = dfBalanced.drop(columns=[TARGET_NUM])
+yTrainBalanced = dfBalanced[TARGET_NUM]
+stata, model = run_experiment(trainBalancedDf, testDf, yTrainBalanced, yTest, method='smote')
+print(stata)
+
+# 6. Сформулируйте выводы по проделанной работе
+# для предсказания мошеннических транзакция сэмплирование tomek показало наилучший f1 = 0.7413127413127413
