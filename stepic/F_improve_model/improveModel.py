@@ -321,7 +321,15 @@ X_new2 = X_new[:, selector.support_]
 print(X_new2.shape)
 model = get_score(X_new2, y, is_return=True)
 
-# Переборный отбор
+# SelectFromModel
+from sklearn.feature_selection import SelectFromModel
+
+selector = SelectFromModel(model, prefit=False, max_features=100, threshold=-np.inf)
+X_new2 = selector.fit_transform(X_new, y)
+X_new2.shape
+model = get_score(X_new2, y, is_return=True)
+
+# Переборный отбор - самый тяжелый, но метрика лучше
 from sklearn.feature_selection import SequentialFeatureSelector
 
 sfs_forward = SequentialFeatureSelector(
@@ -334,3 +342,18 @@ model = get_score(X_new3, y, is_return=True)
 X_new3 = sfs_forward.transform(X_new2)
 print(X_new3.shape)
 model = get_score(X_new3, y, is_return=True)
+
+# от обратного
+sfs_backward = SequentialFeatureSelector(
+    model, n_features_to_select=40, direction="backward"
+)
+sfs_backward.fit(X_new3, y)
+X_new4 = sfs_backward.transform(X_new3)
+print(X_new4.shape)
+model = get_score(X_new3, y, is_return=True)
+
+plt.figure(figsize=(15, 6))
+plt.bar(np.arange(len(model.coef_)), sorted(model.coef_))
+plt.xlabel('features')
+plt.ylabel('coefs');
+plt.show()
