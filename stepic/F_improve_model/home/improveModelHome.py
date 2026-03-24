@@ -14,6 +14,13 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 
 sourceDf = pd.read_csv("salary.csv")
+
+# целевое значение, переводим в 0 и 1, по идее так можно
+targetColumn = 'salary'
+sourceDf.loc[sourceDf[targetColumn] == ' >50K', targetColumn] = '1'
+sourceDf.loc[sourceDf[targetColumn] == ' <=50K', targetColumn] = '0'
+sourceDf[targetColumn] = pd.to_numeric(sourceDf[targetColumn])
+
 print(sourceDf.head(2))
 
 # # 1. Базовое решение
@@ -23,19 +30,11 @@ print(sourceDf.head(2))
 #
 # print(sourceDf.describe())
 #
-# targetColumn = 'salary'
-#
 # print(sourceDf[targetColumn].value_counts())  # целевые значения имеет 2 уникальных значения
 #
 # num_columns = ['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']  # вещественные поля
 #
 # df = sourceDf[num_columns + [targetColumn]]
-#
-# df['isBetter50'] = 0
-# df.loc[df['salary'] == ' >50K', 'isBetter50'] = 1
-# df.drop([targetColumn], axis=1, inplace=True)
-#
-# targetColumn = 'isBetter50'
 #
 # x = df[num_columns]
 # y = df[targetColumn]
@@ -100,6 +99,34 @@ print(sourceDf['race'].value_counts().count())
 print(sourceDf['sex'].value_counts().count())
 
 # вызуальный анализ
+print(sourceDf.describe())
+
 # график зависимости salary от education
-plt.plot(sourceDf['education'], sourceDf['salary'])
+# вывод: у докторов и профи зарплата выше остальных
+sourceDf[['education', targetColumn]].groupby('education')['salary'].mean().plot(kind='bar')
+plt.xlabel('Education')
+plt.ylabel('Average Salary')
+plt.title('Average Salary by Education')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# график зависимости salary от marital-status
+# вывод: у женатых военнослужащих зарплата выше остальных
+sourceDf[['marital-status', targetColumn]].groupby('marital-status')['salary'].mean().plot(kind='bar')
+plt.xlabel('marital-status')
+plt.ylabel('Average Salary')
+plt.title('Average Salary by marital-status')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# график зависимости salary от workclass
+# вывод: у предпринимателя зарплата выше остальных
+sourceDf[['workclass', targetColumn]].groupby('workclass')['salary'].mean().plot(kind='bar')
+plt.xlabel('workclass')
+plt.ylabel('Average Salary')
+plt.title('Average Salary by workclass')
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.show()
