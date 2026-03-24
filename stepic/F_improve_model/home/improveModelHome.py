@@ -1,0 +1,66 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+from onnx.reference.ops.aionnxml.op_one_hot_encoder import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import warnings
+from sklearn.metrics import (roc_auc_score, roc_curve, auc, confusion_matrix,
+                             accuracy_score, classification_report,
+                             precision_recall_curve, recall_score, precision_score, fbeta_score, f1_score)
+
+warnings.filterwarnings('ignore')
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
+sourceDf = pd.read_csv("salary.csv")
+print(sourceDf.head(2))
+
+# 1. Базовое решение
+print(sourceDf.isnull().sum())  # пропусков нет
+
+print(sourceDf.dtypes)  # типы данных
+
+print(sourceDf.describe())
+
+targetColumn = 'salary'
+
+print(sourceDf[targetColumn].value_counts())  # целевые значения имеет 2 уникальных значения
+
+num_columns = ['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']  # вещественные поля
+
+df = sourceDf[num_columns + [targetColumn]]
+
+df['isBetter50'] = 0
+df.loc[df['salary'] == ' >50K', 'isBetter50'] = 1
+df.drop([targetColumn], axis=1, inplace=True)
+
+targetColumn = 'isBetter50'
+
+x = df[num_columns]
+y = df[targetColumn]
+
+# разделение данных
+trainDf, testDf, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_state=0, shuffle=True, stratify=y)
+
+# масштабирование
+scaler = StandardScaler()
+trainDf = scaler.fit_transform(trainDf)
+testDf = scaler.transform(testDf)
+
+# обучение
+model = LogisticRegression()
+model.fit(trainDf, yTrain)
+
+# получение предсказаний
+testPred = model.predict(testDf)
+
+# 0 precision = 0.83    recall =  0.94   f1 =   0.89
+# 1 precision = 0.70    recall =  0.40   f1 =   0.51
+# для ЗП <= 50 - precision (в выборку попадут только с ЗП <= 50) = 0.83%, recall (сколько % от общего кол-ва с ЗП <= 50) == 0.94 (т.е. 6% скорее не угадаем)
+# для ЗП > 50 - precision (в выборку попадут только с ЗП <= 50) = 0.70%, recall (сколько % от общего кол-ва с ЗП <= 50) == 0.40 (т.е. 60% скорее не угадаем)
+# Вывод: на ограниченном наборе данных точность предсказаний мала
+print(classification_report(yTest, testPred))
+
+# Accuracy - достаточно высокий, но он не показателен. Т.к. имеется большая разностьв количестве с зп == <=50K в 3 раза больше
+print(model.score(testDf, yTest))

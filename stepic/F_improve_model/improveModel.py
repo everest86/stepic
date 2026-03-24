@@ -34,9 +34,11 @@ data['weekday'] = data['date'].dt.weekday
 # ## Конструирование признаков
 data = pd.read_csv("data.csv")
 
+print(data.head(1))
 
-# print(data.head(1))
+print(data.dtypes)
 
+exit()
 
 def get_score(X, y, random_seed=42, model=None, is_return=False):
     if model is None:
