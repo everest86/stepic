@@ -173,7 +173,7 @@ def getFscore(df):
 # кодирование категориальных признаков
 def get_one_hot(X, cols):
     for each in cols:
-        dummies = pd.get_dummies(X[each], prefix=each)
+        dummies = pd.get_dummies(X[each], prefix=each, dtype='int')
         X = pd.concat([X, dummies], axis=1)
     return X
 
@@ -291,45 +291,83 @@ catColumns.remove('workclass')
 # Вывод: при кодировании категориальных признаков качество предсказаний увеличивается
 
 # 5. Проведите отбор признаков минимум с помощью трех подходов
-def get_score(X, y, random_seed=42, model=None, is_return=False):
+def get_score(X, y, random_seed=0, model=None, is_return=False):
     if model is None:
-        model = LinearRegression()
+        model = LogisticRegression()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=random_seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y, shuffle=True)
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
     model.fit(X_train, y_train)
+    report = classification_report(y_test, model.predict(X_test), output_dict=True)
     if is_return:
-        print(model.score(X_test, y_test))
+        print(report['macro avg']['f1-score'])
         return model
 
-    return model.score(X_test, y_test)
+    print(report['macro avg']['f1-score'])
 
+
+x = empDf.drop(columns=[targetColumn])
+y = sourceDf[targetColumn]
 
 # одномерный f_regression
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_regression
 
-x = empDf.drop(columns=catColumns)
-y = empDf[targetColumn]
-print(x.shape)
-selector = SelectKBest(f_regression, k=3)
+# выбрать 25 лучших
+# вывод: качество предсказаний уменьшилось из-за уменьшения количества признаков
+selector = SelectKBest(f_regression, k=30)
 x_new = selector.fit_transform(x, y)
 model = get_score(x_new, y, is_return=True)
 
-# # одномерный mutual_info_regression
-# from sklearn.feature_selection import mutual_info_regression
-# selector = SelectKBest(mutual_info_regression, k=87)
-# x_new = selector.fit_transform(x, y)
-# print(x_new.shape)
-#
-# # Рекурсивный отбор
-# from sklearn.feature_selection import RFE
-#
-# selector = RFE(model, n_features_to_select=85, step=1)
-# selector = selector.fit(x_new, y)
-# x_new = x_new[:, selector.support_]
-# print(x_new.shape)
+# одномерный mutual_info_regression
+# вывод: качество предсказаний уменьшилось из-за уменьшения количества признаков
+from sklearn.feature_selection import mutual_info_regression
+
+selector = SelectKBest(mutual_info_regression, k=30)
+x_new = selector.fit_transform(x, y)
+model = get_score(x_new, y, is_return=True)
+
+# проценты
+from sklearn.feature_selection import SelectPercentile
+
+selector = SelectPercentile(f_regression, percentile=70)
+X_new = selector.fit_transform(x, y)
+model = get_score(x_new, y, is_return=True)
+
+# Рекурсивный отбор
+# вывод: качество предсказаний уменьшилось из-за уменьшения количества признаков
+from sklearn.feature_selection import RFE
+
+selector = RFE(model, n_features_to_select=30, step=1)
+selector = selector.fit(X_new, y)
+x_new = X_new[:, selector.support_]
+model = get_score(x_new, y, is_return=True)
+
+# SelectFromModel
+# вывод: качество предсказаний уменьшилось из-за уменьшения количества признаков
+from sklearn.feature_selection import SelectFromModel
+
+selector = SelectFromModel(model, prefit=False, max_features=30, threshold=-np.inf)
+x_new = selector.fit_transform(x, y)
+model = get_score(x_new, y, is_return=True)
+
+# Переборный отбор - самый тяжелый, но метрика лучше
+from sklearn.feature_selection import SequentialFeatureSelector
+
+sfs_forward = SequentialFeatureSelector(
+    model, n_features_to_select=30, direction="forward"
+)
+sfs_forward.fit(x, y)
+x_new = x[:, sfs_forward.get_support()]
+model = get_score(x_new, y, is_return=True)
+
+# 6. Оцените подходящие метрики качества
+# с уменьшением количества колонок искуственно созданных - уменьшается качество предсказаний
+
+# 7. Сформулируйте выводы по проделанной работе
+# с конструированием новых признаков - качество предсказаний увеличивается
+# для каждого признака требуется искать наилучший способ кодирования, сделать это можно с помощью метрик

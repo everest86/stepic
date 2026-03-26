@@ -38,8 +38,6 @@ print(data.head(1))
 
 print(data.dtypes)
 
-exit()
-
 def get_score(X, y, random_seed=42, model=None, is_return=False):
     if model is None:
         model = LinearRegression()
@@ -261,6 +259,7 @@ model = get_score(data_processed.drop(columns=exclude_columns), data_processed['
 # print(model.coef_)
 
 # Там где низкий коэффициент - меньше влияния на целевой признак. Где пусто - те признаки можно удалить
+print(model.coef_)
 plt.figure(figsize=(15, 6))
 plt.bar(np.arange(len(model.coef_)), sorted(model.coef_))
 plt.xlabel('features')
